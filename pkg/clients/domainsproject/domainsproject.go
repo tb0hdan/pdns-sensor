@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/rs/zerolog"
@@ -42,7 +43,12 @@ func (d *DomainsProjectClient) SubmitDomains(domains []string) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			d.logger.Error().Err(err).Msg("failed to close response body")
+		}
+	}(resp.Body)
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("failed to submit domains, status code: %d", resp.StatusCode)
 	}
