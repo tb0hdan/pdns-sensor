@@ -1,6 +1,7 @@
 package models
 
 import (
+	"strings"
 	"sync"
 
 	"github.com/tb0hdan/pdns-sensor/pkg/utils"
@@ -14,6 +15,9 @@ type DomainQueue struct {
 func (q *DomainQueue) Add(domain string) {
 	q.Lock.Lock()
 	defer q.Lock.Unlock()
+	// Fix mangled domain names
+	domain = strings.ToLower(domain)
+	// Validate the domain before adding it to the queue
 	if !utils.IsValidDomain(domain) {
 		return
 	}
