@@ -1,5 +1,6 @@
 # pdns-sensor
 Passive DNS Sensor - open source project for collecting passive DNS data from various sources and sending it to DomainsProject.org.
+
 *WARNING: This project is intended to be used only on your own hardware and network. Do not use it on other networks without permission!*
 
 ## Intro 
