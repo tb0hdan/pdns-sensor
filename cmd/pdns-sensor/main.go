@@ -18,10 +18,14 @@ func main() {
 	var (
 		debug           = flag.Bool("debug", false, "Enable debug logging")
 		enableMikrotik  = flag.Bool("enable-mikrotik", false, "Enable Mikrotik log source")
-		enableTCPDump   = flag.Bool("enable-tcpdump", true, "Enable TCPDump source")
+		enableTCPDump   = flag.Bool("enable-tcpdump", false, "Enable TCPDump source")
 		mikrotikLogFile = flag.String("mikrotik-log-file", miktortik_log.DefaultLogFile, "Path to the Mikrotik log file")
 	)
 	flag.Parse()
+	if !*enableMikrotik && !*enableTCPDump {
+		flag.Usage()
+		os.Exit(1)
+	}
 	// Initialize the logger
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 	zerolog.SetGlobalLevel(zerolog.InfoLevel)
