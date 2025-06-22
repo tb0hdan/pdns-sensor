@@ -22,11 +22,8 @@ type MikrotikLog struct {
 	logFile string
 }
 
-func (m *MikrotikLog) Stop(ctx context.Context) error {
-	// This is a placeholder for the actual implementation of stopping the Mikrotik log source.
-	// The implementation would typically involve closing any connections to the Mikrotik router
-	// and cleaning up resources.
-	m.logger.Info().Msg("Stopping Mikrotik log source...")
+func (m *MikrotikLog) Start() error {
+	m.logger.Info().Msg("Starting Mikrotik log source...")
 	f, err := os.Open(m.logFile)
 	if err != nil {
 		m.logger.Error().Err(err).Msgf("Error opening log file: %s", m.logFile)
@@ -63,12 +60,8 @@ func (m *MikrotikLog) Stop(ctx context.Context) error {
 	return nil
 }
 
-func (m *MikrotikLog) Start() error {
-	m.logger.Info().Msg("Starting Mikrotik log source...")
-	if m.logFile == "" {
-		m.logFile = DefaultLogFile
-	}
-	// Here you would add the logic to connect to the Mikrotik router and read logs.
+func (m *MikrotikLog) Stop(ctx context.Context) error {
+	m.logger.Info().Msg("Stopping Mikrotik log source...")
 	return nil
 }
 

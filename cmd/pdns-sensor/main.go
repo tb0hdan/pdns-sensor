@@ -51,7 +51,6 @@ func main() {
 				panic(err)
 			}
 		}()
-		logger.Info().Msg("Mikrotik log source is not implemented yet.")
 	}
 
 	// Run the main loop
