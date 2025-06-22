@@ -19,16 +19,13 @@ type TCPDump struct {
 
 // Stop is a placeholder for the actual implementation of stopping the TCPDump source.
 func (t *TCPDump) Stop(ctx context.Context) error {
-	// This is a placeholder for the actual implementation of stopping the TCPDump source.
-	// The implementation would typically involve terminating the tcpdump process and cleaning up resources.
 	t.logger.Info().Msg("Stopping TCPDump source...")
-	// Here you would add the logic to stop the tcpdump process.
 	return nil
 }
 
 func (t *TCPDump) Start() error {
-	args := []string{"-ni", "any", "port", "53"} // Example arguments for tcpdump
-	cmd := exec.Command("tcpdump", args...)      // Example: list files in the current directory
+	args := []string{"-ni", "any", "port", "53"}
+	cmd := exec.Command("tcpdump", args...)
 
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
@@ -39,8 +36,6 @@ func (t *TCPDump) Start() error {
 		t.logger.Fatal().Msgf("Error starting command: %v", err)
 	}
 	// We're good to continue, now we can read from stdout
-
-	// go QueueSubmitter(queue)
 	scanner := bufio.NewScanner(stdout)
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
