@@ -1,0 +1,77 @@
+package tcpdump
+
+import (
+	"bufio"
+	"os/exec"
+	"strings"
+
+	"github.com/rs/zerolog"
+	"github.com/tb0hdan/pdns-sensor/pkg/models"
+	"github.com/tb0hdan/pdns-sensor/pkg/sources"
+	"github.com/tb0hdan/pdns-sensor/pkg/utils"
+)
+
+type TCPDump struct {
+	queue  *models.DomainQueue
+	logger zerolog.Logger
+}
+
+func (t *TCPDump) Start() error {
+	args := []string{"-ni", "any", "port", "53"} // Example arguments for tcpdump
+	cmd := exec.Command("tcpdump", args...)      // Example: list files in the current directory
+
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		t.logger.Fatal().Msgf("Error creating StdoutPipe: %v", err)
+	}
+
+	if err := cmd.Start(); err != nil {
+		t.logger.Fatal().Msgf("Error starting command: %v", err)
+	}
+	// We're good to continue, now we can read from stdout
+
+	// go QueueSubmitter(queue)
+	scanner := bufio.NewScanner(stdout)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" {
+			continue
+		}
+		// Filter non-empty lines that don't contain "IP"
+		if !strings.Contains(line, "IP") {
+			continue
+		}
+		// Filter lines that do not contain "A?" or "AAAA?"
+		if !strings.Contains(line, "A?") && !strings.Contains(line, "AAAA?") {
+			continue
+		}
+		for _, field := range strings.Fields(line) {
+			if !strings.HasSuffix(field, ".") {
+				continue
+			}
+			field = strings.TrimSuffix(field, ".")
+			if !utils.IsValidDomain(field) {
+				continue
+			}
+			t.queue.Add(field)
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		t.logger.Fatal().Msgf("Error reading stdout: %v", err)
+	}
+
+	if err := cmd.Wait(); err != nil {
+		t.logger.Fatal().Msgf("Command finished with error: %v", err)
+	}
+
+	t.logger.Info().Msg("Subprocess finished successfully.")
+	return nil
+}
+
+func NewTCPDump(queue *models.DomainQueue, logger zerolog.Logger) sources.Source {
+	return &TCPDump{
+		queue:  queue,
+		logger: logger,
+	}
+}
