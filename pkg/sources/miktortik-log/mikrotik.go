@@ -1,11 +1,10 @@
 package miktortik_log
 
 import (
-	"bufio"
 	"context"
-	"os"
 	"strings"
 
+	"github.com/hpcloud/tail"
 	"github.com/rs/zerolog"
 	"github.com/tb0hdan/pdns-sensor/pkg/models"
 	"github.com/tb0hdan/pdns-sensor/pkg/sources"
@@ -24,19 +23,14 @@ type MikrotikLog struct {
 
 func (m *MikrotikLog) Start() error {
 	m.logger.Info().Msg("Starting Mikrotik log source...")
-	f, err := os.Open(m.logFile)
+	t, err := tail.TailFile(m.logFile, tail.Config{Follow: true})
 	if err != nil {
 		m.logger.Error().Err(err).Msgf("Error opening log file: %s", m.logFile)
 		return err
 	}
-	defer func() {
-		if err := f.Close(); err != nil {
-			m.logger.Error().Err(err).Msg("Error closing log file")
-		}
-	}()
-	scanner := bufio.NewScanner(f)
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
+
+	for lineItem := range t.Lines {
+		line := strings.TrimSpace(lineItem.Text)
 		if line == "" {
 			continue
 		}
