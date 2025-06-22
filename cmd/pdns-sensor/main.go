@@ -7,13 +7,19 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/tb0hdan/pdns-sensor/pkg/clients/domainsproject"
 	"github.com/tb0hdan/pdns-sensor/pkg/models"
+	"github.com/tb0hdan/pdns-sensor/pkg/sources"
+	miktortik_log "github.com/tb0hdan/pdns-sensor/pkg/sources/miktortik-log"
 	"github.com/tb0hdan/pdns-sensor/pkg/sources/tcpdump"
 	"github.com/tb0hdan/pdns-sensor/pkg/submitter"
+	"github.com/tb0hdan/pdns-sensor/pkg/utils"
 )
 
 func main() {
 	var (
-		debug = flag.Bool("debug", false, "Enable debug logging")
+		debug           = flag.Bool("debug", false, "Enable debug logging")
+		enableMikrotik  = flag.Bool("enable-mikrotik", false, "Enable Mikrotik log source")
+		enableTCPDump   = flag.Bool("enable-tcpdump", true, "Enable TCPDump source")
+		mikrotikLogFile = flag.String("mikrotik-log-file", miktortik_log.DefaultLogFile, "Path to the Mikrotik log file")
 	)
 	flag.Parse()
 	// Initialize the logger
@@ -30,7 +36,24 @@ func main() {
 	// Start the queue newSubmitter in a separate goroutine
 	go newSubmitter.QueueSubmitter(queue)
 	dumper := tcpdump.NewTCPDump(queue, logger)
-	if err := dumper.Start(); err != nil {
-		panic(err)
+	if *enableTCPDump {
+		go func() {
+			if err := dumper.Start(); err != nil {
+				panic(err)
+			}
+		}()
 	}
+
+	newMikrotik := miktortik_log.NewMikrotikLog(queue, logger, *mikrotikLogFile)
+	if *enableMikrotik {
+		go func() {
+			if err := newMikrotik.Start(); err != nil {
+				panic(err)
+			}
+		}()
+		logger.Info().Msg("Mikrotik log source is not implemented yet.")
+	}
+
+	// Run the main loop
+	utils.Run(logger, []sources.Source{dumper, newMikrotik})
 }

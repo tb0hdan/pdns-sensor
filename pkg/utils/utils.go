@@ -1,29 +1,29 @@
 package utils
 
 import (
-	"regexp"
-	"strings"
+	"context"
+	"os"
+	"os/signal"
+	"time"
+
+	"github.com/rs/zerolog"
+	"github.com/tb0hdan/pdns-sensor/pkg/sources"
 )
 
-func IsDomain(domain string) bool {
-	reg := regexp.MustCompile(`(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]`)
-	return reg.MatchString(domain)
-}
+const (
+	// ShutdownTimeout is the maximum time to wait for graceful shutdown.
+	ShutdownTimeout = 10 * time.Second
+)
 
-func IsValidDomain(domain string) bool {
-	// Sanity checks for domain length and structure
-	if len(domain) < 3 || len(domain) > 253 {
-		return false
+func Run(logger zerolog.Logger, sourceList []sources.Source) {
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
+	<-ctx.Done()
+	ctx, cancel := context.WithTimeout(context.Background(), ShutdownTimeout)
+	defer cancel()
+	for _, s := range sourceList {
+		if err := s.Stop(ctx); err != nil {
+			logger.Fatal().Err(err).Msgf("Error stopping source %T", s)
+		}
 	}
-	//
-	if strings.HasSuffix(domain, ".local") || strings.HasSuffix(domain, ".localhost") {
-		return false
-	}
-	// Check for dot
-	parts := strings.Split(domain, ".")
-	if len(parts) < 2 {
-		return false
-	}
-	//
-	return IsDomain(domain)
 }

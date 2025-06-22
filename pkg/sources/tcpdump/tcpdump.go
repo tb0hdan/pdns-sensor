@@ -2,6 +2,7 @@ package tcpdump
 
 import (
 	"bufio"
+	"context"
 	"os/exec"
 	"strings"
 
@@ -14,6 +15,15 @@ import (
 type TCPDump struct {
 	queue  *models.DomainQueue
 	logger zerolog.Logger
+}
+
+// Stop is a placeholder for the actual implementation of stopping the TCPDump source.
+func (t *TCPDump) Stop(ctx context.Context) error {
+	// This is a placeholder for the actual implementation of stopping the TCPDump source.
+	// The implementation would typically involve terminating the tcpdump process and cleaning up resources.
+	t.logger.Info().Msg("Stopping TCPDump source...")
+	// Here you would add the logic to stop the tcpdump process.
+	return nil
 }
 
 func (t *TCPDump) Start() error {
