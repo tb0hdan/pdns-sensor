@@ -8,7 +8,7 @@ Passive DNS Sensor - open source project for collecting passive DNS data from va
 ### Supported sources 
 
 - TCPDump subprocess
-- Mikrotik DNS logs
+- Mikrotik DNS logs (/var/log/network.log by default)
 
 ### Supported targets
 
