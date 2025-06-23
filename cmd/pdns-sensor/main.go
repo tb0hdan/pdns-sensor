@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/rs/zerolog"
+	"github.com/tb0hdan/memcache"
 	"github.com/tb0hdan/pdns-sensor/pkg/clients/domainsproject"
 	"github.com/tb0hdan/pdns-sensor/pkg/models"
 	"github.com/tb0hdan/pdns-sensor/pkg/sources"
@@ -20,6 +21,7 @@ func main() {
 		enableMikrotik  = flag.Bool("enable-mikrotik", false, "Enable Mikrotik log source")
 		enableTCPDump   = flag.Bool("enable-tcpdump", false, "Enable TCPDump source")
 		mikrotikLogFile = flag.String("mikrotik-log-file", miktortik_log.DefaultLogFile, "Path to the Mikrotik log file")
+		cacheTTL        = flag.Int64("cache-ttl", 3600, "Cache TTL in seconds (default: 3600 seconds)")
 	)
 	flag.Parse()
 	if !*enableMikrotik && !*enableTCPDump {
@@ -33,7 +35,9 @@ func main() {
 		zerolog.SetGlobalLevel(zerolog.DebugLevel)
 	}
 	logger := zerolog.New(os.Stdout).With().Timestamp().Logger()
-	queue := models.NewDomainQueue()
+	wrapLogger := utils.WrapLogger(logger)
+	cache := memcache.New(wrapLogger)
+	queue := models.NewDomainQueue(cache, *cacheTTL)
 	// Initialize the queue newSubmitter
 	client := domainsproject.NewDomainsProjectClient("", logger) // Use default API URL
 	newSubmitter := submitter.NewSubmitter(client, logger)
