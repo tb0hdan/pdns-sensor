@@ -19,7 +19,7 @@ Passive DNS Sensor - open source project for collecting passive DNS data from va
 Build the project:
 
 ```bash
-make
+make build
 ```
 
 Run the project:
