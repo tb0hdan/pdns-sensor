@@ -22,7 +22,7 @@ Build the project:
 make build
 ```
 
-Run the project:
+Run the project (requires sudo):
 
 ```bash
 sudo build/pdns-sensor -enable-mikrotik
