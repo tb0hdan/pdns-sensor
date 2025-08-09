@@ -1,5 +1,5 @@
 .PHONY: build build-linux-amd64 build-linux-arm64 build-darwin-amd64 build-darwin-arm64 build-all
-VERSION =? $(shell cat VERSION)
+VERSION ?= $(shell cat VERSION)
 
 all: lint build-all
 
@@ -32,5 +32,5 @@ tools:
 
 tag:
 	@echo "Tagging the current version..."
-	git tag -a "v$$VERSION" -m "Release version $$VERSION"; \
-	git push origin "v$$VERSION"
+	git tag -a "v$(VERSION)" -m "Release version $(VERSION)"; \
+	git push origin "v$(VERSION)"
