@@ -1,0 +1,95 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.24'
+
+    - name: Build binaries for all platforms
+      run: |
+        mkdir -p build
+        make build-linux-amd64
+        make build-linux-arm64
+        make build-darwin-amd64
+        make build-darwin-arm64
+
+    - name: Create checksums
+      run: |
+        cd build
+        sha256sum pdns-sensor-* > checksums.txt
+
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        draft: false
+        prerelease: false
+
+    - name: Upload Linux AMD64 Binary
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./build/pdns-sensor-linux-amd64
+        asset_name: pdns-sensor-linux-amd64
+        asset_content_type: application/octet-stream
+
+    - name: Upload Linux ARM64 Binary
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./build/pdns-sensor-linux-arm64
+        asset_name: pdns-sensor-linux-arm64
+        asset_content_type: application/octet-stream
+
+    - name: Upload Darwin AMD64 Binary
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./build/pdns-sensor-darwin-amd64
+        asset_name: pdns-sensor-darwin-amd64
+        asset_content_type: application/octet-stream
+
+    - name: Upload Darwin ARM64 Binary
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./build/pdns-sensor-darwin-arm64
+        asset_name: pdns-sensor-darwin-arm64
+        asset_content_type: application/octet-stream
+
+    - name: Upload Checksums
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./build/checksums.txt
+        asset_name: checksums.txt
+        asset_content_type: text/plain
