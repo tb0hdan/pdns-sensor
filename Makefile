@@ -1,11 +1,15 @@
 .PHONY: build build-linux-amd64 build-linux-arm64 build-darwin-amd64 build-darwin-arm64 build-all
 VERSION ?= $(shell cat cmd/pdns-sensor/VERSION)
 
-all: lint test build-all
+all: lint build-dir test build-all
 
 lint:
 	@echo "Running linters..."
 	@golangci-lint run ./...
+
+build-dir:
+	@echo "Creating build directory..."
+	@mkdir -p build
 
 build-linux-amd64:
 	@echo "Building for Linux amd64..."
