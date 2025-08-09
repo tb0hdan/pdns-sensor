@@ -28,8 +28,13 @@ go.work.sum
 .env
 
 # Editor/IDE
+.claude/
 .idea/
 .vscode/
 
+# AI integration files
+.claude/
+CLAUDE.md
+GEMINI.md
 # Build directories
 build/

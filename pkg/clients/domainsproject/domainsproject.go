@@ -33,7 +33,7 @@ func (d *DomainsProjectClient) SubmitDomains(domains []string) error {
 	if err != nil {
 		return fmt.Errorf("failed to marshal domains to JSON: %w", err)
 	}
-	request, err := http.NewRequestWithContext(context.Background(), "POST", DefaultAPIURL, bytes.NewReader(jsonData))
+	request, err := http.NewRequestWithContext(context.Background(), "POST", d.APIURL, bytes.NewReader(jsonData))
 	if err != nil {
 		return err
 	}

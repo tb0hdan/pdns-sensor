@@ -1,7 +1,7 @@
 .PHONY: build build-linux-amd64 build-linux-arm64 build-darwin-amd64 build-darwin-arm64 build-all
 VERSION ?= $(shell cat cmd/pdns-sensor/VERSION)
 
-all: lint build-all
+all: lint test build-all
 
 lint:
 	@echo "Running linters..."
@@ -34,3 +34,8 @@ tag:
 	@echo "Tagging the current version..."
 	git tag -a "v$(VERSION)" -m "Release version $(VERSION)"; \
 	git push origin "v$(VERSION)"
+
+test:
+	@echo "Running tests..."
+	@go test -v -race -coverprofile=build/coverage.out ./...
+	@go tool cover -html=build/coverage.out -o build/coverage.html
