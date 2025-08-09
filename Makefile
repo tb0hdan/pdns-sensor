@@ -1,5 +1,5 @@
 .PHONY: build build-linux-amd64 build-linux-arm64 build-darwin-amd64 build-darwin-arm64 build-all
-VERSION ?= $(shell cat VERSION)
+VERSION ?= $(shell cat cmd/pdns-sensor/VERSION)
 
 all: lint build-all
 

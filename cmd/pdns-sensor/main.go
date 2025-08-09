@@ -1,6 +1,7 @@
 package main
 
 import (
+	_ "embed"
 	"flag"
 	"os"
 
@@ -15,6 +16,9 @@ import (
 	"github.com/tb0hdan/pdns-sensor/pkg/utils"
 )
 
+//go:embed VERSION
+var Version string
+
 func main() {
 	var (
 		debug           = flag.Bool("debug", false, "Enable debug logging")
@@ -22,8 +26,13 @@ func main() {
 		enableTCPDump   = flag.Bool("enable-tcpdump", false, "Enable TCPDump source")
 		mikrotikLogFile = flag.String("mikrotik-log-file", miktortik_log.DefaultLogFile, "Path to the Mikrotik log file")
 		cacheTTL        = flag.Int64("cache-ttl", 3600, "Cache TTL in seconds (default: 3600 seconds)")
+		version         = flag.Bool("version", false, "Print version and exit")
 	)
 	flag.Parse()
+	if *version {
+		println("pdns-sensor version:", Version)
+		os.Exit(0)
+	}
 	if !*enableMikrotik && !*enableTCPDump {
 		flag.Usage()
 		os.Exit(1)
