@@ -14,19 +14,28 @@ type Submitter struct {
 }
 
 func (s *Submitter) QueueSubmitter(q *models.DomainQueue) {
+	const maxBatchSize = 1024
 	tick := time.NewTicker(60 * time.Second)
 	for range tick.C {
 		domains := q.Get()
 		if len(domains) == 0 {
 			continue
 		}
-		// Here you would typically send the domains to your API or process them further
-		s.logger.Info().Msgf("Submitting %d domains: %v\n", len(domains), domains)
-		err := s.client.SubmitDomains(domains)
-		if err != nil {
-			s.logger.Printf("Error submitting domains: %v", err)
-		} else {
-			s.logger.Info().Msgf("Successfully submitted %d domains.\n", len(domains))
+		
+		for i := 0; i < len(domains); i += maxBatchSize {
+			end := i + maxBatchSize
+			if end > len(domains) {
+				end = len(domains)
+			}
+			batch := domains[i:end]
+			
+			s.logger.Info().Msgf("Submitting batch of %d domains (batch %d/%d)\n", len(batch), (i/maxBatchSize)+1, (len(domains)+maxBatchSize-1)/maxBatchSize)
+			err := s.client.SubmitDomains(batch)
+			if err != nil {
+				s.logger.Error().Err(err).Msgf("Error submitting batch of %d domains", len(batch))
+			} else {
+				s.logger.Info().Msgf("Successfully submitted batch of %d domains.\n", len(batch))
+			}
 		}
 	}
 }
