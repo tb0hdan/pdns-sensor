@@ -4,6 +4,7 @@ go 1.24.4
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/google/gopacket v1.1.19 // indirect
 	github.com/hpcloud/tail v1.0.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect

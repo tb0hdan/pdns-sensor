@@ -11,6 +11,7 @@ import (
 	"github.com/tb0hdan/pdns-sensor/pkg/models"
 	"github.com/tb0hdan/pdns-sensor/pkg/sources"
 	miktortik_log "github.com/tb0hdan/pdns-sensor/pkg/sources/miktortik-log"
+	"github.com/tb0hdan/pdns-sensor/pkg/sources/pcap"
 	"github.com/tb0hdan/pdns-sensor/pkg/sources/tcpdump"
 	"github.com/tb0hdan/pdns-sensor/pkg/submitter"
 	"github.com/tb0hdan/pdns-sensor/pkg/utils"
@@ -24,6 +25,7 @@ func main() {
 		debug           = flag.Bool("debug", false, "Enable debug logging")
 		enableMikrotik  = flag.Bool("enable-mikrotik", false, "Enable Mikrotik log source")
 		enableTCPDump   = flag.Bool("enable-tcpdump", false, "Enable TCPDump source")
+		enablePCAP      = flag.Bool("enable-pcap", false, "Enable PCAP source")
 		mikrotikLogFile = flag.String("mikrotik-log-file", miktortik_log.DefaultLogFile, "Path to the Mikrotik log file")
 		cacheTTL        = flag.Int64("cache-ttl", 3600, "Cache TTL in seconds (default: 3600 seconds)")
 		version         = flag.Bool("version", false, "Print version and exit")
@@ -33,7 +35,7 @@ func main() {
 		println("pdns-sensor version:", Version)
 		os.Exit(0)
 	}
-	if !*enableMikrotik && !*enableTCPDump {
+	if !*enableMikrotik && !*enableTCPDump && !*enablePCAP {
 		flag.Usage()
 		os.Exit(1)
 	}
@@ -66,6 +68,15 @@ func main() {
 		go func() {
 			if err := newMikrotik.Start(); err != nil {
 				panic(err)
+			}
+		}()
+	}
+	// If PCAP is enabled, create a new PCAP source
+	pcapSource := pcap.NewPCAP(queue, logger)
+	if *enablePCAP {
+		go func() {
+			if err := pcapSource.Start(); err != nil {
+				logger.Fatal().Err(err).Msg("Failed to start PCAP source")
 			}
 		}()
 	}

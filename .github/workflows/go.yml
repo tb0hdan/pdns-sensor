@@ -21,6 +21,9 @@ jobs:
       with:
         go-version: '1.24'
 
+    - name: Set up dependencies
+      run: apt update && apt install -y libpcap-dev
+      
     - name: Set up tools
       run: make tools
 
