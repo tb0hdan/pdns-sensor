@@ -2,6 +2,7 @@ package subfinder
 
 import (
 	"context"
+	"io"
 	"sync"
 	"time"
 
@@ -108,6 +109,9 @@ func (s *Source) discoverSubdomains(ctx context.Context, domain string) {
 		Silent:             true,
 		NoColor:            true,
 		RemoveWildcard:     true,
+		OnlyRecursive:      false,
+		Output:             io.Discard, // Use io.Discard to prevent nil pointer issues
+		OutputFile:         "",         // No output file
 		ResultCallback: func(result *resolve.HostEntry) {
 			// Add discovered subdomain to the queue
 			s.queue.Add(result.Host)
