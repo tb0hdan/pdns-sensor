@@ -34,7 +34,9 @@ go.work.sum
 
 # AI integration files
 .claude/
+AGENTS.md
 CLAUDE.md
 GEMINI.md
 # Build directories
 build/
+pdns-sensor

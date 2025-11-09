@@ -57,6 +57,5 @@ sudo apt install libpcap-dev
 
 Then run the project with PCAP support (Linux/AMD64 only):
 ```
-```bash
 sudo build/pdns-sensor -enable-pcap -enable-mikrotik
 ```

@@ -12,6 +12,7 @@ import (
 	"github.com/tb0hdan/pdns-sensor/pkg/sources"
 	miktortik_log "github.com/tb0hdan/pdns-sensor/pkg/sources/miktortik-log"
 	"github.com/tb0hdan/pdns-sensor/pkg/sources/pcap"
+	"github.com/tb0hdan/pdns-sensor/pkg/sources/subfinder"
 	"github.com/tb0hdan/pdns-sensor/pkg/sources/tcpdump"
 	"github.com/tb0hdan/pdns-sensor/pkg/submitter"
 	"github.com/tb0hdan/pdns-sensor/pkg/utils"
@@ -26,6 +27,7 @@ func main() {
 		enableMikrotik  = flag.Bool("enable-mikrotik", false, "Enable Mikrotik log source")
 		enableTCPDump   = flag.Bool("enable-tcpdump", false, "Enable TCPDump source")
 		enablePCAP      = flag.Bool("enable-pcap", false, "Enable PCAP source")
+		enableSubfinder = flag.Bool("enable-subfinder", false, "Enable Subfinder source for subdomain discovery")
 		mikrotikLogFile = flag.String("mikrotik-log-file", miktortik_log.DefaultLogFile, "Path to the Mikrotik log file")
 		cacheTTL        = flag.Int64("cache-ttl", 3600, "Cache TTL in seconds (default: 3600 seconds)")
 		version         = flag.Bool("version", false, "Print version and exit")
@@ -35,7 +37,7 @@ func main() {
 		println("pdns-sensor version:", Version)
 		os.Exit(0)
 	}
-	if !*enableMikrotik && !*enableTCPDump && !*enablePCAP {
+	if !*enableMikrotik && !*enableTCPDump && !*enablePCAP && !*enableSubfinder {
 		flag.Usage()
 		os.Exit(1)
 	}
@@ -81,6 +83,16 @@ func main() {
 		}()
 	}
 
+	// If Subfinder is enabled, create a new Subfinder source
+	subfinderSource := subfinder.NewSubfinder(queue, logger, *cacheTTL)
+	if *enableSubfinder {
+		go func() {
+			if err := subfinderSource.Start(); err != nil {
+				logger.Fatal().Err(err).Msg("Failed to start Subfinder source")
+			}
+		}()
+	}
+
 	// Run the main loop
-	utils.Run(logger, []sources.Source{dumper, newMikrotik})
+	utils.Run(logger, []sources.Source{dumper, newMikrotik, pcapSource, subfinderSource})
 }

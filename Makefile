@@ -1,5 +1,6 @@
 .PHONY: build build-linux-amd64 build-linux-arm64 build-darwin-amd64 build-darwin-arm64 build-all
 VERSION ?= $(shell cat cmd/pdns-sensor/VERSION)
+LINTER_VERSION ?= v2.6.1
 
 all: lint build-dir test build-all
 
@@ -27,12 +28,14 @@ build-darwin-arm64:
 	@echo "Building for macOS arm64 (Apple Silicon)..."
 	@GOOS=darwin GOARCH=arm64 go build -o build/pdns-sensor-darwin-arm64 ./cmd/pdns-sensor/*.go
 
+build: build-all
+
 build-all: build-linux-amd64 build-linux-arm64 build-darwin-amd64 build-darwin-arm64
 	@echo "All cross-platform builds complete!"
 
 tools:
 	@echo "Running tools..."
-	@curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v2.3.1
+	@curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b $(shell go env GOPATH)/bin $(LINTER_VERSION)
 
 tag:
 	@echo "Tagging the current version..."
