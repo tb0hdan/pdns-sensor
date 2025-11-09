@@ -9,6 +9,7 @@ require (
 	github.com/rs/zerolog v1.34.0
 	github.com/stretchr/testify v1.10.0
 	github.com/tb0hdan/memcache v1.0.2
+	github.com/weppos/publicsuffix-go v0.30.1
 )
 
 require (
@@ -110,7 +111,6 @@ require (
 	github.com/tklauser/numcpus v0.6.1 // indirect
 	github.com/tomnomnom/linkheader v0.0.0-20180905144013-02ca5825eb80 // indirect
 	github.com/ulikunitz/xz v0.5.15 // indirect
-	github.com/weppos/publicsuffix-go v0.30.1 // indirect
 	github.com/yuin/goldmark v1.7.4 // indirect
 	github.com/yuin/goldmark-emoji v1.0.3 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect

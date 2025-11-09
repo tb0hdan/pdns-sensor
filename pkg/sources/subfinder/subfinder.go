@@ -3,6 +3,7 @@ package subfinder
 import (
 	"context"
 	"io"
+	"strings"
 	"sync"
 	"time"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/tb0hdan/pdns-sensor/pkg/models"
 	"github.com/tb0hdan/pdns-sensor/pkg/sources"
+	"github.com/weppos/publicsuffix-go/publicsuffix"
 )
 
 type Source struct {
@@ -79,18 +81,36 @@ func (s *Source) processDomains(ctx context.Context) {
 			domains := s.queue.Get()
 
 			for _, domain := range domains {
-				// Check if we've already processed this domain recently
-				if s.isRecentlyProcessed(domain) {
+				// Extract parent domain
+				parentDomain := s.getParentDomain(domain)
+				if parentDomain == "" {
+					s.logger.Debug().Str("domain", domain).Msg("Could not extract parent domain, skipping")
 					continue
 				}
 
-				// Process domain with subfinder
-				s.discoverSubdomains(ctx, domain)
+				// Log if we extracted a different parent domain
+				if parentDomain != domain {
+					s.logger.Info().
+						Str("original", domain).
+						Str("parent", parentDomain).
+						Msg("Extracted parent domain from subdomain")
+				}
 
-				// Mark as processed
-				s.markProcessed(domain)
+				// Check if we've already processed this parent domain recently
+				if s.isRecentlyProcessed(parentDomain) {
+					s.logger.Debug().
+						Str("parent", parentDomain).
+						Msg("Parent domain recently processed, skipping")
+					continue
+				}
 
-				// Re-add domain to queue so it stays available for other sources
+				// Process parent domain with subfinder
+				s.discoverSubdomains(ctx, parentDomain)
+
+				// Mark parent domain as processed
+				s.markProcessed(parentDomain)
+
+				// Re-add original domain to queue so it stays available for other sources
 				s.queue.Add(domain)
 			}
 		}
@@ -98,7 +118,10 @@ func (s *Source) processDomains(ctx context.Context) {
 }
 
 func (s *Source) discoverSubdomains(ctx context.Context, domain string) {
-	s.logger.Debug().Str("domain", domain).Msg("Discovering subdomains")
+	s.logger.Info().Str("parent_domain", domain).Msg("Starting subdomain discovery for parent domain")
+
+	// Track discovered subdomains count
+	var discoveredCount int
 
 	// Create subfinder runner options
 	runnerInstance, err := runner.NewRunner(&runner.Options{
@@ -115,7 +138,8 @@ func (s *Source) discoverSubdomains(ctx context.Context, domain string) {
 		ResultCallback: func(result *resolve.HostEntry) {
 			// Add discovered subdomain to the queue
 			s.queue.Add(result.Host)
-			s.logger.Debug().
+			discoveredCount++
+			s.logger.Info().
 				Str("subdomain", result.Host).
 				Str("source", result.Source).
 				Str("parent", domain).
@@ -141,7 +165,11 @@ func (s *Source) discoverSubdomains(ctx context.Context, domain string) {
 	// Wait for completion or context cancellation
 	select {
 	case <-done:
-		// Enumeration completed
+		// Enumeration completed - log summary
+		s.logger.Info().
+			Str("domain", domain).
+			Int("discovered", discoveredCount).
+			Msg("Subdomain discovery completed")
 	case <-ctx.Done():
 		// Context cancelled, stop enumeration
 		s.logger.Debug().Str("domain", domain).Msg("Subfinder enumeration cancelled")
@@ -189,6 +217,29 @@ func (s *Source) cleanupCache(ctx context.Context) {
 			s.logger.Debug().Msg("Cleaned up subfinder cache")
 		}
 	}
+}
+
+// getParentDomain extracts the parent domain from a given domain
+// For example: www.google.com -> google.com, sub.example.co.uk -> example.co.uk
+func (s *Source) getParentDomain(domain string) string {
+	// Remove any trailing dots
+	domain = strings.TrimSuffix(domain, ".")
+
+	// Parse the domain to get the registered domain (eTLD+1)
+	parsed, err := publicsuffix.Parse(domain)
+	if err != nil {
+		s.logger.Debug().Err(err).Str("domain", domain).Msg("Failed to parse domain")
+		return ""
+	}
+
+	// If there's no SLD (second-level domain), it means we got an invalid domain or just a TLD
+	if parsed.SLD == "" {
+		return ""
+	}
+
+	// Return the registered domain (SLD + TLD)
+	// This will be like "google.com" or "example.co.uk"
+	return parsed.SLD + "." + parsed.TLD
 }
 
 func NewSubfinder(queue *models.DomainQueue, logger zerolog.Logger, cacheTTL int64) sources.Source {
